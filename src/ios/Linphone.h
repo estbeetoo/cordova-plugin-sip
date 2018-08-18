@@ -4,14 +4,11 @@
 
 @interface Linphone : CDVPlugin{
     LinphoneCore *lc;
-    LinphoneCall *call;
 }
 
 @property (nonatomic) LinphoneCore *lc;
-@property (nonatomic) LinphoneCall *call;
 
 - (void)acceptCall:(CDVInvokedUrlCommand*)command;
-- (void)listenCall:(CDVInvokedUrlCommand*)command;
 - (void)login:(CDVInvokedUrlCommand*)command;
 - (void)logout:(CDVInvokedUrlCommand*)command;
 - (void)call:(CDVInvokedUrlCommand*)command;
@@ -21,5 +18,7 @@
 - (void)toggleSpeaker:(CDVInvokedUrlCommand*)command;
 - (void)toggleMute:(CDVInvokedUrlCommand*)command;
 - (void)sendDtmf:(CDVInvokedUrlCommand*)command;
+    
+- (void)sendEvent:(NSString*)theEvent;
 
 @end

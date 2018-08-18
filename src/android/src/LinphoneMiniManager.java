@@ -70,7 +70,6 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 	public static Timer mTimer;
 	public static SurfaceView mCaptureView;
 	public CallbackContext mCallbackContext;
-	public CallbackContext mLoginCallbackContext;
 
 	public LinphoneMiniManager(Context c) {
 		mContext = c;
@@ -271,22 +270,28 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 	public void callState(LinphoneCore lc, LinphoneCall call, State cstate,
 			String message) {
 
-			if(cstate == State.Connected)
-			{
-				mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, "Connected"));
-			}
-			else if(cstate == State.IncomingReceived)
-			{
-                mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,"Incoming"));
-			}
-			else if(cstate == State.CallEnd)
-			{
-				mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,"End"));
-			}
-			else if(cstate == State.Error)
-			{
-				mCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,"Error"));
-			}
+		if(cstate == State.Idle){ sendEvent("CallIdle"); }
+	    if(cstate == State.IncomingReceived){{ sendEvent("CallIncomingReceived");}
+	    if(cstate == State.OutgoingInit){ sendEvent("CallOutgoingInit");}
+	    if(cstate == State.OutgoingProgress){ sendEvent("CallOutgoingProgress");}
+	    if(cstate == State.OutgoingRinging){ sendEvent("CallOutgoingRinging");}
+	    if(cstate == State.OutgoingEarlyMedia){ sendEvent("CallOutgoingEarlyMedia");}
+	    if(cstate == State.Connected){ sendEvent("CallConnected");}
+	    if(cstate == State.StreamsRunning){ sendEvent("CallStreamsRunning");}
+	    if(cstate == State.Pausing){ sendEvent("CallPausing");}
+	    if(cstate == State.Paused){ sendEvent("CallPaused");}
+	    if(cstate == State.Resuming){ sendEvent("CallResuming");}
+	    if(cstate == State.Refered){ sendEvent("CallRefered");}
+	    if(cstate == State.Error){ sendEvent("CallError");}
+	    if(cstate == State.CallEnd){ sendEvent("CallEnd");}
+	    if(cstate == State.PausedByRemote){ sendEvent("CallPausedByRemote");}
+	    if(cstate == State.CallUpdatedByRemote){ sendEvent("CallUpdatedByRemote");}
+	    if(cstate == State.CallIncomingEarlyMedia){ sendEvent("CallIncomingEarlyMedia");}
+	    if(cstate == State.CallUpdating){ sendEvent("CallUpdating");}
+	    if(cstate == State.CallReleased){ sendEvent("CallReleased");}
+	    if(cstate == State.CallEarlyUpdatedByRemote){ sendEvent("CallEarlyUpdatedByRemote");}
+	    if(cstate == State.CallEarlyUpdating){ sendEvent("CallEarlyUpdating");}
+
 		Log.d("Call state: " + cstate + "(" + message + ")");
 	}
 
@@ -315,15 +320,18 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 	@Override
 	public void registrationState(LinphoneCore lc, LinphoneProxyConfig cfg,
 			RegistrationState cstate, String smessage) {
-		if(cstate == RegistrationState.RegistrationOk)
-		{
-			mLoginCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,"RegistrationSuccess"));
 
-		}
-		else if(cstate == RegistrationState.RegistrationFailed)
-		{
-			mLoginCallbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK,"RegistrationFailed"));
-		}
+	    if( cstate == RegistrationState.RegistrationFailed){
+	        sendEvent("RegistrationFailed");
+	    } else if(cstate == RegistrationState.RegistrationOk){    
+	    	sendEvent("RegistrationOk");
+	    } else if(cstate == RegistrationState.RegistrationNone){
+	        sendEvent("RegistrationNone");
+	    } else if(cstate == RegistrationState.RegistrationProgress){
+	        sendEvent("RegistrationProgress");
+	    } else if(cstate == RegistrationState.RegistrationCleared){
+	        sendEvent("RegistrationCleared");
+	    }
 	}
 
 	@Override
@@ -466,12 +474,7 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 		return 0;
 	}
 
-	public void listenCall(CallbackContext callbackContext){
-		mCallbackContext = callbackContext;
-	}
-
 	public void acceptCall(CallbackContext callbackContext) {
-		mCallbackContext = callbackContext;
         LinphoneCall call = mLinphoneCore.getCurrentCall();
         try {
             mLinphoneCore.acceptCall(call);
@@ -481,7 +484,6 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 	}
 
 	public void call(String address, String displayName, CallbackContext callbackContext) {
-
 		mCallbackContext = callbackContext;
 		newOutgoingCall(address, displayName);
 	}
@@ -492,17 +494,7 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 
 	public void login(String username, String password, String domain, CallbackContext callbackContext) {
 		try {
-		//LinphoneAddress address = LinphoneCoreFactory.instance().createLinphoneAddress("sip:" + username + "@" + domain);
-
-
-
-//		LinphonePreferences.AccountBuilder builder = new LinphonePreferences.AccountBuilder(getLc())
-//				.setUsername(username)
-//				.setDomain(domain)
-//				.setPassword(password);
-
 			LinphoneCoreFactory lcFactory = LinphoneCoreFactory.instance();
-
 
 			LinphoneAddress address = lcFactory.createLinphoneAddress("sip:" + username + "@" + domain);
 			username = address.getUserName();
@@ -511,26 +503,23 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 				mLinphoneCore.addAuthInfo(lcFactory.createAuthInfo(username, password, (String)null, domain));
 			}
 
-
 			LinphoneProxyConfig proxyCfg = mLinphoneCore.createProxyConfig("sip:" + username + "@" + domain, domain, (String)null, true);
 
 			proxyCfg.enableRegister(true);
 			mLinphoneCore.addProxyConfig(proxyCfg);
 			mLinphoneCore.setDefaultProxyConfig(proxyCfg);
 
-
-
-
-			mLoginCallbackContext = callbackContext;
-
-
-
-			//builder.saveNewAccount();
+			mCallbackContext = callbackContext;
 		} catch (LinphoneCoreException e) {
 			e.printStackTrace();
 		}
 	}
 
+	private void sendEvent(String message){
+		PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, message);
+		pluginResult.setKeepCallback(true);
+		mCallbackContext.sendPluginResult(pluginResult);    
+	}		
 }
 
 

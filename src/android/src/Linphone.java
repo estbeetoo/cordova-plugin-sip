@@ -44,11 +44,7 @@ public class Linphone extends CordovaPlugin  {
         }else if (action.equals("call")) {
             call(args.getString(0), args.getString(1), callbackContext);
             return true;
-        }else if(action.equals("listenCall")){
-            listenCall(callbackContext);
-            return true;
-        }
-        else if(action.equals("acceptCall")){
+        }else if(action.equals("acceptCall")){
             acceptCall(args.getString(0), callbackContext);
             return true;
         }else if (action.equals("videocall")) {
@@ -110,10 +106,6 @@ public class Linphone extends CordovaPlugin  {
         }catch (Exception e){
             Log.d("hangup error", e.getMessage());
         }
-    }
-
-    public static synchronized void listenCall( final CallbackContext callbackContext){
-        mLinphoneManager.listenCall(callbackContext);
     }
 
     public static synchronized void acceptCall( final String isAcceptCall, final CallbackContext callbackContext){
