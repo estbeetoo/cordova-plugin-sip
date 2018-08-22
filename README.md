@@ -89,36 +89,36 @@ var sipManager = {
 
 <h4>Registration message<h4>
 ```
-    RegistrationNone, /**<Initial state for registrations */
-    RegistrationProgress, /**<Registration is in progress */
-    RegistrationOk, /**< Registration is successful */
-    RegistrationCleared, /**< Unregistration succeeded */
+    RegistrationNone ->Initial state for registrations 
+    RegistrationProgress ->Registration is in progress 
+    RegistrationOk -> Registration is successful 
+    RegistrationCleared -> Unregistration succeeded 
     RegistrationFailed  
 ```
 
 <h4>Call message<h4>
 ```    
-    CallIdle,                   /**<Initial call state */
-    CallIncomingReceived, /**<This is a new incoming call */
-    CallOutgoingInit, /**<An outgoing call is started */
-    CallOutgoingProgress, /**<An outgoing call is in progress */
-    CallOutgoingRinging, /**<An outgoing call is ringing at remote end */
-    CallOutgoingEarlyMedia, /**<An outgoing call is proposed early media */
-    CallConnected, /**<Connected, the call is answered */
-    CallStreamsRunning, /**<The media streams are established and running*/
-    CallPausing, /**<The call is pausing at the initiative of local end */
-    CallPaused, /**< The call is paused, remote end has accepted the pause */
-    CallResuming, /**<The call is being resumed by local end*/
-    CallRefered, /**<The call is being transfered to another party, resulting in a new outgoing call to follow immediately*/
-    CallError, /**<The call encountered an error*/
-    CallEnd, /**<The call ended normally*/
-    CallPausedByRemote, /**<The call is paused by remote end*/
-    CallUpdatedByRemote, /**<The call's parameters change is requested by remote end, used for example when video is added by remote */
-    CallIncomingEarlyMedia, /**<We are proposing early media to an incoming call */
-    CallUpdating, /**<A call update has been initiated by us */
-    CallReleased, /**< The call object is no more retained by the core */
-    CallEarlyUpdatedByRemote, /*<The call is updated by remote while not yet answered (early dialog SIP UPDATE received).*/
-    CallEarlyUpdating /*<We are updating the call while not yet answered (early dialog SIP UPDATE sent)*/
+    CallIdle -> Initial call state 
+    CallIncomingReceived ->This is a new incoming call 
+    CallOutgoingInit ->An outgoing call is started 
+    CallOutgoingProgress ->An outgoing call is in progress 
+    CallOutgoingRinging ->An outgoing call is ringing at remote end 
+    CallOutgoingEarlyMedia ->An outgoing call is proposed early media 
+    CallConnected ->Connected, the call is answered 
+    CallStreamsRunning ->The media streams are established and running
+    CallPausing ->The call is pausing at the initiative of local end 
+    CallPaused -> The call is paused, remote end has accepted the pause 
+    CallResuming ->The call is being resumed by local end
+    CallRefered ->The call is being transfered to another party, resulting in a new outgoing call to follow immediately
+    CallError ->The call encountered an error
+    CallEnd ->The call ended normally
+    CallPausedByRemote ->The call is paused by remote end
+    CallUpdatedByRemote ->The call's parameters change is requested by remote end, used for example when video is added by remote 
+    CallIncomingEarlyMedia ->We are proposing early media to an incoming call 
+    CallUpdating ->A call update has been initiated by us 
+    CallReleased -> The call object is no more retained by the core 
+    CallEarlyUpdatedByRemote -> The call is updated by remote while not yet answered (early dialog SIP UPDATE received).
+    CallEarlyUpdating  -> We are updating the call while not yet answered (early dialog SIP UPDATE sent)
 ```
 
 
