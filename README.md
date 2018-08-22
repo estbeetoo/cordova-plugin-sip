@@ -88,6 +88,7 @@ var sipManager = {
 
 
 <h4>Registration message<h4>
+
 ```
     RegistrationNone ->Initial state for registrations 
     RegistrationProgress ->Registration is in progress 
@@ -97,7 +98,8 @@ var sipManager = {
 ```
 
 <h4>Call message<h4>
-```    
+
+```  
     CallIdle -> Initial call state 
     CallIncomingReceived ->This is a new incoming call 
     CallOutgoingInit ->An outgoing call is started 
