@@ -41,41 +41,47 @@ Deploy and Run!
 <h3>Usage</h3>
 
 ```
-    var sipManager = {
-        register: function () {
-            cordova.plugins.sip.login('203', '203', '192.168.1.111:5060', sipManager.events, sipManager.events))
-        },
-        call: function () {
-            cordova.plugins.sip.call('sip:111@192.168.1.111:5060', '203', function (e) {}, function (e) {})
-        },
-        hangup: function () {
-            cordova.plugins.sip.hangup(function (e) {}, function (e) {})
-        },
-        events: function (e) {
-            console.log(e);
+var sipManager = {
+    register: function () {
+        cordova.plugins.sip.login('102', '102', '192.168.1.22:5060', sipManager.events, sipManager.events);
+    },
+    call: function () {
+        cordova.plugins.sip.call('sip:111@192.168.1.111:5060', '203', function (e) {
+        }, function (e) {
+        })
+    },
+    hangup: function () {
+        cordova.plugins.sip.hangup(function (e) {
+        }, function (e) {
+        })
+    },
+    events: function (e) {
+        console.log(e);
 
-            if (e == 'RegistrationOk') {
-                    alert("RegistrationOk");
-            }
-            if (e == 'RegistrationError') {
-                    alert("Registration Failed!");
-            }
-            if (e == 'CallIncomingReceived') {
-               var r = confirm("Incoming Call");
-               if (r == true) {
-                    cordova.plugins.sip.accept(true, function (e) {}, function (e) {});
-               } else {
-                    sipManager.hangup();
-               }
-            }
-            if (e == 'CallError') {
-                    alert("Call Error!");
-            }
-            if (e == 'CallEnd') {
-                    alert("Call End!");
+        if (e == 'RegistrationOk') {
+            alert("RegistrationOk");
+        }
+        if (e == 'RegistrationError') {
+            alert("Registration Failed!");
+        }
+        if (e == 'CallIncomingReceived') {
+            var r = confirm("Incoming Call");
+            if (r == true) {
+                cordova.plugins.sip.accept(true, function (e) {
+                }, function (e) {
+                });
+            } else {
+                sipManager.hangup();
             }
         }
+        if (e == 'CallError') {
+            alert("Call Error!");
+        }
+        if (e == 'CallEnd') {
+            alert("Call End!");
+        }
     }
+}
 ```
 
 <h3>Event message</h3>

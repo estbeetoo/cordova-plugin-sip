@@ -1,0 +1,26 @@
+{
+  "name": "cordova-plugin-sip",
+  "version": "1.0.0",
+  "description": "A plugin to integrate linphone features to cordova",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/saint13/cordova-plugin-sip.git"
+  },
+  "keywords": [
+    "sip",
+    "cordova",
+    "phonegap",
+    "linphone",
+    "liblinphone"
+  ],
+  "author": "MKSaint13",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/saint13/cordova-plugin-sip/issues"
+  },
+  "homepage": "https://github.com/saint13/cordova-plugin-sip#readme"
+}
