@@ -18,7 +18,8 @@
 - (void)toggleSpeaker:(CDVInvokedUrlCommand*)command;
 - (void)toggleMute:(CDVInvokedUrlCommand*)command;
 - (void)sendDtmf:(CDVInvokedUrlCommand*)command;
-    
+
 - (void)sendEvent:(NSString*)theEvent;
+- (void)sendJsonEvent:(NSString*)jsonText;
 
 @end

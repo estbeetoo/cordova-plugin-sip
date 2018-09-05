@@ -50,13 +50,23 @@ var sipManager = {
         }, function (e) {
         })
     },
+
     hangup: function () {
-        cordova.plugins.sip.hangup(function (e) {
-        }, function (e) {
-        })
+        cordova.plugins.sip.hangup(function (e) {}, function (e) {})
     },
-    events: function (e) {
-        console.log(e);
+               
+    accept: function () {
+        cordova.plugins.sip.accept(function (e) {}, function (e) {})
+    },
+   
+    dtmf: function (dtmf) {
+        cordova.plugins.sip.sendDtmf(dtmf, function (e) {}, function (e) {})
+    },
+
+    events: function (event) {
+        console.log(event);
+
+        var e = JSON.parse(event).status;
 
         if (e == 'RegistrationOk') {
             alert("RegistrationOk");
@@ -67,9 +77,8 @@ var sipManager = {
         if (e == 'CallIncomingReceived') {
             var r = confirm("Incoming Call");
             if (r == true) {
-                cordova.plugins.sip.accept(true, function (e) {
-                }, function (e) {
-                });
+                console.log("call from user " + JSON.parse(event).username);
+                sipManager.accept();
             } else {
                 sipManager.hangup();
             }
@@ -86,8 +95,11 @@ var sipManager = {
 
 <h3>Event message</h3>
 
+Event message it is json.
 
-<h4>Registration message</h4>
+Fromat json response {"status": TYPE }
+
+<h4>Registration type for json status </h4>
 
 ```   
 RegistrationNone -> Initial state for registrations 
@@ -97,11 +109,11 @@ RegistrationCleared -> Unregistration succeeded
 RegistrationFailed</h4>  
 ```
 
-<h4>Call message</h4>
+<h4>Call type for json status</h4>
 
 ```   
 CallIdle -> Initial call state 
-CallIncomingReceived -> This is a new incoming call 
+CallIncomingReceived -> This is a new incoming call  ( For this type, added new field exsample {"status":"CallIncomingReceived", "username":"username"} )
 CallOutgoingInit -> An outgoing call is started 
 CallOutgoingProgress -> An outgoing call is in progress 
 CallOutgoingRinging -> An outgoing call is ringing at remote end 
@@ -122,5 +134,9 @@ CallReleased -> The call object is no more retained by the core
 CallEarlyUpdatedByRemote -> The call is updated by remote while not yet answered (early dialog SIP UPDATE received).
 CallEarlyUpdating -> We are updating the call while not yet answered (early dialog SIP UPDATE sent)
 ```
+
+<h4>Other type for json status</h4>
+
+SendDtmf -> Initial call state 
 
 

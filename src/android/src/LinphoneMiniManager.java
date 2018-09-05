@@ -248,6 +248,7 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 
     public void sendDtmf(char number) {
 		mLinphoneCore.sendDtmf(number);
+		sendEvent("sendDtmf");
     }
 
 	public void updateCall() {
@@ -271,7 +272,12 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 			String message) {
 
 		if(cstate == State.Idle){ sendEvent("CallIdle"); }
-	    if(cstate == State.IncomingReceived){{ sendEvent("CallIncomingReceived");}
+	    if(cstate == State.IncomingReceived){
+
+	    	LinphoneAddress from = call.getRemoteAddress();
+        	String messageJson = "{\"status\":\"CallIncomingReceived\", \"username\":\""+from.getUserName()+"\"}";
+	    	sendJsonEvent(messageJson);
+	    }
 	    if(cstate == State.OutgoingInit){ sendEvent("CallOutgoingInit");}
 	    if(cstate == State.OutgoingProgress){ sendEvent("CallOutgoingProgress");}
 	    if(cstate == State.OutgoingRinging){ sendEvent("CallOutgoingRinging");}
@@ -516,10 +522,15 @@ public class LinphoneMiniManager implements LinphoneCoreListener {
 	}
 
 	private void sendEvent(String message){
+		String json = "{\"status\":\"" + message +"\"}";
+		sendJsonEvent(json);
+	}	
+
+	private void sendJsonEvent(String json){
 		PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, message);
 		pluginResult.setKeepCallback(true);
 		mCallbackContext.sendPluginResult(pluginResult);    
-	}		
+	}	
 }
 
 

@@ -14,6 +14,33 @@ NSString *callBackCommandId;
 static void stop(int signum){
     running=false;
 }
+
+static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel lev, const char *fmt, va_list args) {
+    int prio;
+//    switch(lev){
+//        case ORTP_DEBUG:    prio = ANDROID_LOG_DEBUG;    break;
+//        case ORTP_MESSAGE:    prio = ANDROID_LOG_INFO;    break;
+//        case ORTP_WARNING:    prio = ANDROID_LOG_WARN;    break;
+//        case ORTP_ERROR:    prio = ANDROID_LOG_ERROR;    break;
+//        case ORTP_FATAL:    prio = ANDROID_LOG_FATAL;    break;
+//        default:            prio = ANDROID_LOG_DEFAULT;    break;
+//    }
+//    linphone_android_log_handler(prio, fmt, args);
+    
+    char str[4096];
+    char *current;
+    char *next;
+    
+    vsnprintf(str, sizeof(str) - 1, fmt, args);
+    str[sizeof(str) - 1] = '\0';
+    
+//        __android_log_write(prio, LogDomain, str);
+    
+        
+    NSLog(@"Linphone: log_handler %s", str);
+}
+
+
 //+(void) registration_state_changed:(struct _LinphoneCore*) lc:(LinphoneProxyConfig*) cfg:(LinphoneRegistrationState) cstate: (const char*)message
 static void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message){
     NSLog(@"Linphone: registration_state_changed %s %d", message, cstate);
@@ -41,7 +68,9 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
         [himself sendEvent:@"CallIdle"];
     }
     if(cstate == LinphoneCallIncomingReceived){
-        [himself sendEvent:@"CallIncomingReceived"];
+        LinphoneAddress *from = linphone_call_get_remote_address(call);
+        NSString *messageJson = [NSString stringWithFormat:@"{\"status\":\"%@\", \"username\":\"%s\"}", @"CallIncomingReceived", linphone_address_get_username(from)];        
+        [himself sendJsonEvent:messageJson];
     }
     if(cstate == LinphoneCallOutgoingInit){
         [himself sendEvent:@"CallOutgoingInit"];
@@ -108,15 +137,9 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 - (void)acceptCall:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Linphone: acceptCall");
-    bool isAccept = [command.arguments objectAtIndex:0];
     LinphoneCall *call = linphone_core_get_current_call((LinphoneCore *)lc);
     if (call){
-        if( isAccept == TRUE){
             linphone_core_accept_call( lc, call);
-        }
-        else{
-            linphone_core_terminate_call( lc, call);
-        }
     }
 }
 
@@ -154,6 +177,16 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
         lc = linphone_core_new(&vtable, NULL, NULL, NULL);
     }
     
+    linphone_core_set_log_handler(linphone_android_ortp_log_handler);
+    
+    LCSipTransports transportValue={0};
+    transportValue.tcp_port=5060;
+    transportValue.udp_port=0;
+    transportValue.tls_port=0;
+    linphone_core_set_sip_transports(lc, &transportValue);
+//
+  
+    linphone_core_enable_keep_alive(lc, true);
     LinphoneProxyConfig *proxy_cfg = linphone_core_create_proxy_config(lc);
     LinphoneAddress *from = linphone_address_new(identity);
     
@@ -185,8 +218,6 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 }
 -(void)listenTick:(NSTimer *)timer {
     linphone_core_iterate(lc);
-    
-    
 }
 
 - (void)logout:(CDVInvokedUrlCommand*)command
@@ -295,19 +326,23 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 
 - (void)sendDtmf:(CDVInvokedUrlCommand*)command
 {
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
     NSString* dtmf = [command.arguments objectAtIndex:0];
     LinphoneCall *call = linphone_core_get_current_call((LinphoneCore *)lc);
     if(call && linphone_call_get_state(call) != LinphoneCallEnd){
         linphone_call_send_dtmf(call, [dtmf characterAtIndex:0]);
+        [himself sendEvent:@"SendDtmf"];
     }
-    
-    [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
 -(void) sendEvent:(NSString*)theEvent
 {
-    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:theEvent];
+    NSString *messageJson = [NSString stringWithFormat:@"{\"status\":\"%@\"}", theEvent];
+    [himself sendJsonEvent:messageJson];
+}
+
+-(void) sendJsonEvent:(NSString*)jsonText
+{
+    CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonText];
     [pluginResult setKeepCallbackAsBool:YES];
     [himself.commandDelegate sendPluginResult:pluginResult callbackId:callBackCommandId];
 }
