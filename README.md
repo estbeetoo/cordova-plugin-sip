@@ -137,6 +137,7 @@ CallEarlyUpdating -> We are updating the call while not yet answered (early dial
 
 <h4>Other type for json status</h4>
 
-SendDtmf -> Initial call state 
-
+```
+SendDtmf -> Send DTMF message
+```
 
