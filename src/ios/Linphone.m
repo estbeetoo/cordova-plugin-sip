@@ -178,11 +178,13 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
     }
     
     linphone_core_set_log_handler(linphone_android_ortp_log_handler);
-    
-    LCSipTransports transportValue={0};
-    transportValue.tcp_port=5060;
-    transportValue.udp_port=0;
-    transportValue.tls_port=0;
+
+    /*
+     * According to advice: https://github.com/BelledonneCommunications/linphone-iphone/issues/346#issuecomment-405752607
+     * Use random ports to prevent the error:
+     * `bind() failed for 0.0.0.0 port 5060: Address already in use`
+     */
+    LCSipTransports transportValue={ -1, -1, -1, -1 };;
     linphone_core_set_sip_transports(lc, &transportValue);
 //
   
