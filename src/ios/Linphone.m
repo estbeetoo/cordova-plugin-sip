@@ -26,17 +26,17 @@ static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel l
 //        default:            prio = ANDROID_LOG_DEFAULT;    break;
 //    }
 //    linphone_android_log_handler(prio, fmt, args);
-    
+
     char str[4096];
     char *current;
     char *next;
-    
+
     vsnprintf(str, sizeof(str) - 1, fmt, args);
     str[sizeof(str) - 1] = '\0';
-    
+
 //        __android_log_write(prio, LogDomain, str);
-    
-        
+
+
     NSLog(@"Linphone: log_handler %s", str);
 }
 
@@ -44,7 +44,7 @@ static void linphone_android_ortp_log_handler(const char *domain, OrtpLogLevel l
 //+(void) registration_state_changed:(struct _LinphoneCore*) lc:(LinphoneProxyConfig*) cfg:(LinphoneRegistrationState) cstate: (const char*)message
 static void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyConfig *cfg, LinphoneRegistrationState cstate, const char *message){
     NSLog(@"Linphone: registration_state_changed %s %d", message, cstate);
-    
+
     //Linphone *neco = [ Linphone new];
     if( cstate == LinphoneRegistrationFailed){
         [himself sendEvent:@"RegistrationFailed"];
@@ -63,13 +63,13 @@ static void registration_state_changed(struct _LinphoneCore *lc, LinphoneProxyCo
  */
 static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCallState cstate, const char *msg){
     NSLog(@"Linphone: call_state_changed %s %d", msg, cstate);
-    
+
     if(cstate == LinphoneCallIdle){
         [himself sendEvent:@"CallIdle"];
     }
     if(cstate == LinphoneCallIncomingReceived){
         LinphoneAddress *from = linphone_call_get_remote_address(call);
-        NSString *messageJson = [NSString stringWithFormat:@"{\"status\":\"%@\", \"username\":\"%s\"}", @"CallIncomingReceived", linphone_address_get_username(from)];        
+        NSString *messageJson = [NSString stringWithFormat:@"{\"status\":\"%@\", \"username\":\"%s\"}", @"CallIncomingReceived", linphone_address_get_username(from)];
         [himself sendJsonEvent:messageJson];
     }
     if(cstate == LinphoneCallOutgoingInit){
@@ -150,33 +150,34 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
     NSString* username = [command.arguments objectAtIndex:0];
     NSString* password = [command.arguments objectAtIndex:1];
     NSString* domain = [command.arguments objectAtIndex:2];
+    NSString* protocol = [command.arguments objectAtIndex:3];
     NSString* sip = [@"sip:" stringByAppendingString:[[username stringByAppendingString:@"@"] stringByAppendingString:domain]];
-    
+
     callBackCommandId = command.callbackId;
     char* identity = (char*)[sip UTF8String];
-    
+
     if (lc == NULL) {
         LinphoneCoreVTable vtable = {0};
-        
+
         signal(SIGINT,stop);
         /*
          Fill the LinphoneCoreVTable with application callbacks.
          All are optional. Here we only use the registration_state_changed callbacks
          in order to get notifications about the progress of the registration.
          */
-        
+
         vtable.registration_state_changed = registration_state_changed;
-        
+
         /*
          Fill the LinphoneCoreVTable with application callbacks.
          All are optional. Here we only use the call_state_changed callbacks
          in order to get notifications about the progress of the call.
          */
         vtable.call_state_changed = call_state_changed;
-        
+
         lc = linphone_core_new(&vtable, NULL, NULL, NULL);
     }
-    
+
     linphone_core_set_log_handler(linphone_android_ortp_log_handler);
 
     /*
@@ -184,39 +185,49 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
      * Use random ports to prevent the error:
      * `bind() failed for 0.0.0.0 port 5060: Address already in use`
      */
-    LCSipTransports transportValue={ -1, -1, -1, -1 };;
+    LCSipTransports transportValue={0, 0, 0, 0};
+
+    NSArray *protocolOptions = @[@"tcp", @"tls", @"dlts"];
+    int protocolIdx = (int)[protocolOptions indexOfObject:protocol];
+    switch (protocolIdx) {
+        case 0:
+            transportValue.tcp_port = -1;
+            break;
+        case 1:
+            transportValue.tls_port = -1;
+            break;
+        case 2:
+            transportValue.dtls_port = -1;
+            break;
+        default:
+            transportValue.udp_port = -1;
+            break;
+    }
     linphone_core_set_sip_transports(lc, &transportValue);
-//
-  
+
     linphone_core_enable_keep_alive(lc, true);
-    LinphoneProxyConfig *proxy_cfg = linphone_core_create_proxy_config(lc);
+    proxyCfg = linphone_core_create_proxy_config((LinphoneCore *)lc);
     LinphoneAddress *from = linphone_address_new(identity);
-    
+
     /*create authentication structure from identity*/
     LinphoneAuthInfo *info=linphone_auth_info_new(linphone_address_get_username(from),NULL,(char*)[password UTF8String],NULL,(char*)[domain UTF8String],(char*)[domain UTF8String]);
     linphone_core_add_auth_info(lc,info); /*add authentication info to LinphoneCore*/
-    
+
     // configure proxy entries
-    linphone_proxy_config_set_identity(proxy_cfg,identity); /*set identity with user name and domain*/
+    linphone_proxy_config_set_identity(proxyCfg,identity); /*set identity with user name and domain*/
     const char* server_addr = linphone_address_get_domain(from); /*extract domain address from identity*/
-    linphone_proxy_config_set_server_addr(proxy_cfg,server_addr); /* we assume domain = proxy server address*/
-    linphone_proxy_config_enable_register(proxy_cfg,TRUE); /*activate registration for this proxy config*/
+    linphone_proxy_config_set_server_addr(proxyCfg,server_addr); /* we assume domain = proxy server address*/
+    linphone_proxy_config_enable_register(proxyCfg,TRUE); /*activate registration for this proxy config*/
     linphone_address_destroy(from); /*release resource*/
-    linphone_core_add_proxy_config(lc,proxy_cfg); /*add proxy config to linphone core*/
-    linphone_core_set_default_proxy(lc,proxy_cfg); /*set to default proxy*/
-    
-    /* main loop for receiving notifications and doing background linphonecore work: */
-    
-    //while(running){
-    //    linphone_core_iterate(lc); /* first iterate initiates registration */
-    //    ms_usleep(50000);
-    //}
+    linphone_core_add_proxy_config(lc,proxyCfg); /*add proxy config to linphone core*/
+    linphone_core_set_default_proxy(lc,proxyCfg); /*set to default proxy*/
+
     running = TRUE;
     tListen = [NSTimer scheduledTimerWithTimeInterval: 0.05
                                                target: self
                                              selector:@selector(listenTick:)
                                              userInfo: nil repeats:YES];
-    
+
 }
 -(void)listenTick:(NSTimer *)timer {
     linphone_core_iterate(lc);
@@ -225,26 +236,25 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 - (void)logout:(CDVInvokedUrlCommand*)command
 {
     NSLog(@"Linphone: logout");
-    
+
     if(lc != NULL){
-        LinphoneProxyConfig *proxy_cfg = linphone_core_create_proxy_config(lc);
-        linphone_core_get_default_proxy(lc,&proxy_cfg); /* get default proxy config*/
-        linphone_proxy_config_edit(proxy_cfg); /*start editing proxy configuration*/
-        linphone_proxy_config_enable_register(proxy_cfg,FALSE); /*de-activate registration for this proxy config*/
-        linphone_proxy_config_done(proxy_cfg); /*initiate REGISTER with expire = 0*/
-        
-        while(linphone_proxy_config_get_state(proxy_cfg) !=  LinphoneRegistrationCleared){
+        linphone_core_get_default_proxy(lc,&proxyCfg); /* get default proxy config*/
+        linphone_proxy_config_edit(proxyCfg); /*start editing proxy configuration*/
+        linphone_proxy_config_enable_register(proxyCfg,FALSE); /*de-activate registration for this proxy config*/
+        linphone_proxy_config_done(proxyCfg); /*initiate REGISTER with expire = 0*/
+
+        while(linphone_proxy_config_get_state(proxyCfg) !=  LinphoneRegistrationCleared){
             linphone_core_iterate(lc); /*to make sure we receive call backs before shutting down*/
             ms_usleep(50000);
         }
-        
+
         linphone_core_clear_all_auth_info(lc);
         linphone_core_clear_proxy_config(lc);
         linphone_core_destroy(lc);
-        
+
         lc = NULL;
     }
-    
+    NSLog(@"Linphone: logout done");
     [himself sendEvent:@"Logout"];
 }
 
@@ -253,7 +263,7 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
     NSLog(@"Linphone: call");
     NSString* address = [command.arguments objectAtIndex:0];
     NSString* displayName = [command.arguments objectAtIndex:1];
-    
+
     LinphoneCall *call = linphone_core_invite(lc, (char *)[address UTF8String]);
     linphone_call_ref(call);
 }
@@ -261,7 +271,7 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 - (void)videocall:(CDVInvokedUrlCommand*)command
 {
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:@"OK"];
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -269,7 +279,7 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
 {
     NSLog(@"Linphone: hangup");
     [himself sendEvent:@"Hangup"];
-    
+
     LinphoneCall *call = linphone_core_get_current_call((LinphoneCore *)lc);
     if (call && linphone_call_get_state(call) != LinphoneCallEnd){
         linphone_core_terminate_call(lc, call);
@@ -284,12 +294,12 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
     LinphoneCall *call=linphone_core_get_current_call((LinphoneCore *)lc);
     if (call != NULL && linphone_call_params_get_used_video_codec(linphone_call_get_current_params(call))) {
         if(isenabled){
-            
+
         }else{
-            
+
         }
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -303,14 +313,14 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
             UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_Speaker;
             AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute, sizeof(audioRouteOverride),
                                     &audioRouteOverride);
-            
+
         } else {
             UInt32 audioRouteOverride = kAudioSessionOverrideAudioRoute_None;
             AudioSessionSetProperty(kAudioSessionProperty_OverrideAudioRoute, sizeof(audioRouteOverride),
                                     &audioRouteOverride);
         }
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -322,7 +332,7 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
     if(call && linphone_call_get_state(call) != LinphoneCallEnd){
         linphone_core_enable_mic(lc, isenabled);
     }
-    
+
     [self.commandDelegate sendPluginResult:pluginResult callbackId:command.callbackId];
 }
 
@@ -347,6 +357,20 @@ static void call_state_changed(LinphoneCore *lc, LinphoneCall *call, LinphoneCal
     CDVPluginResult* pluginResult = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsString:jsonText];
     [pluginResult setKeepCallbackAsBool:YES];
     [himself.commandDelegate sendPluginResult:pluginResult callbackId:callBackCommandId];
+}
+
+-(void) refreshConnection:(CDVInvokedUrlCommand*)command
+{
+    NSLog(@"Linphone: refreshConnection");
+    //First refresh registration
+    linphone_core_refresh_registers((LinphoneCore *)lc);
+    //wait for registration answer
+    int i=0;
+    while (!linphone_proxy_config_is_registered(proxyCfg) && i++<40 ) {
+        linphone_core_iterate((LinphoneCore *)lc);
+        usleep(100000);
+    }
+    NSLog(@"Linphone: refreshConnection done");
 }
 
 @end

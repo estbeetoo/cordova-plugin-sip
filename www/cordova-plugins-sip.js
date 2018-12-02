@@ -1,12 +1,12 @@
 module.exports =
 {
-    login: function (username, password, domain, successCallback, errorCallback) {
+    login: function (username, password, domain, protocol, successCallback, errorCallback) {
         cordova.exec(
             successCallback,
             errorCallback,
             "Linphone",
             "login",
-            [username, password, domain]
+            [username, password, domain, protocol]
         );
     },
     logout: function (successCallback, errorCallback) {

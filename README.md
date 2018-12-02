@@ -43,7 +43,7 @@ Deploy and Run!
 ```
 var sipManager = {
     register: function () {
-        cordova.plugins.sip.login('102', '102', '192.168.1.22:5060', sipManager.events, sipManager.events);
+        cordova.plugins.sip.login('102', '102', '192.168.1.22:5060', 'udp', sipManager.events, sipManager.events);
     },
     call: function () {
         cordova.plugins.sip.call('sip:111@192.168.1.111:5060', '203', function (e) {
